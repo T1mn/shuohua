@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <!-- Minecraft-style pixel head, larger, cell=96px, origin=(40,128) -->
+
+  <!-- Hair: top 2 rows + back column -->
+  <rect x="40" y="128" width="768" height="192" fill="#4A2F1B"/>
+  <rect x="40" y="320" width="96" height="576" fill="#4A2F1B"/>
+
+  <!-- Skin -->
+  <rect x="136" y="320" width="672" height="192" fill="#C49A6C"/>
+  <rect x="136" y="512" width="192" height="96" fill="#C49A6C"/>
+  <rect x="520" y="512" width="288" height="96" fill="#C49A6C"/>
+  <rect x="136" y="608" width="672" height="96" fill="#C49A6C"/>
+  <rect x="136" y="704" width="288" height="96" fill="#C49A6C"/>
+  <rect x="136" y="800" width="672" height="96" fill="#C49A6C"/>
+
+  <!-- Eye -->
+  <rect x="328" y="512" width="96" height="96" fill="#FFFFFF"/>
+  <rect x="424" y="512" width="96" height="96" fill="#2C2C2C"/>
+
+  <!-- Open mouth -->
+  <rect x="424" y="704" width="384" height="96" fill="#6B3020"/>
+
+  <!-- Sound waves (small) -->
+  <rect x="848" y="682" width="40" height="140" fill="#2C2C2C"/>
+  <rect x="900" y="652" width="40" height="200" fill="#2C2C2C"/>
+  <rect x="952" y="622" width="40" height="260" fill="#2C2C2C"/>
+</svg>

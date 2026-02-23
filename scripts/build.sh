@@ -14,6 +14,7 @@ rm -rf "$ROOT/build/说话.app"
 mkdir -p "$APP_DIR/MacOS" "$APP_DIR/Resources"
 cp DerivedData/Build/Products/Release/Shuohua "$APP_DIR/MacOS/"
 cp Resources/Info.plist "$APP_DIR/"
+cp Resources/AppIcon.icns "$APP_DIR/Resources/" 2>/dev/null || true
 cp -R DerivedData/Build/Products/Release/mlx-swift_Cmlx.bundle "$APP_DIR/Resources/"
 
 # Ad-hoc sign with hardened runtime

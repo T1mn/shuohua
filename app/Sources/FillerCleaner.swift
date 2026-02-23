@@ -57,7 +57,7 @@ class FillerCleaner {
         guard let model, let tokenizer else { return nil }
         guard !text.isEmpty else { return nil }
 
-        let systemPrompt = "去除文本中的填充词（呃、嗯、啊、哦等犹豫词），保留语气助词，只输出清理后的文本。/no_think"
+        let systemPrompt = "去除文本中的填充词（呃、嗯、啊、哦等犹豫词）和重复的字词，保留语气助词，只输出清理后的文本。"
         let systemTokens = tokenizer.encode(systemPrompt).map { Int32($0) }
         let userTokens = tokenizer.encode(text).map { Int32($0) }
 
@@ -88,7 +88,7 @@ class FillerCleaner {
 
         // Greedy decode
         var generated: [Int32] = []
-        let maxTokens = text.count * 3 + 50  // generous limit
+        let maxTokens = text.count * 6 + 200  // generous limit for think tokens
 
         var logits = model.embedTokens.asLinear(hidden[0..., (hidden.dim(1)-1)..<hidden.dim(1), 0...])
         var nextToken = argMax(logits, axis: -1).squeezed().item(Int32.self)

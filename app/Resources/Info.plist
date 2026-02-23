@@ -24,5 +24,7 @@
     <string>说话需要使用麦克风进行语音识别</string>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
 </dict>
 </plist>
