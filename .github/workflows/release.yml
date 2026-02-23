@@ -32,4 +32,4 @@ jobs:
           gh release create "$TAG" \
             --title "说话 $VERSION" \
             --generate-notes \
-            dist/说话-${VERSION}.dmg
+            dist/shuohua-${VERSION}.dmg
