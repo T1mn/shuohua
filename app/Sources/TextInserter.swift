@@ -2,7 +2,7 @@ import Cocoa
 import Carbon.HIToolbox
 
 class TextInserter {
-    /// Delete n characters then type replacement text
+    /// Delete n characters then paste replacement text via clipboard
     func replace(deleteCount n: Int, with text: String) {
         let src = CGEventSource(stateID: .combinedSessionState)
         for _ in 0..<n {
@@ -11,7 +11,25 @@ class TextInserter {
             let up = CGEvent(keyboardEventSource: src, virtualKey: UInt16(kVK_Delete), keyDown: false)
             up?.post(tap: .cgSessionEventTap)
         }
-        insertDelta(text)
+        // Wait for deletes to be processed, then paste via clipboard (atomic, no event flood)
+        usleep(100_000)
+        let pasteboard = NSPasteboard.general
+        let oldContents = pasteboard.string(forType: .string)
+        pasteboard.clearContents()
+        pasteboard.setString(text, forType: .string)
+        usleep(50_000)
+        let vDown = CGEvent(keyboardEventSource: src, virtualKey: UInt16(kVK_ANSI_V), keyDown: true)
+        vDown?.flags = .maskCommand
+        vDown?.post(tap: .cgSessionEventTap)
+        let vUp = CGEvent(keyboardEventSource: src, virtualKey: UInt16(kVK_ANSI_V), keyDown: false)
+        vUp?.flags = .maskCommand
+        vUp?.post(tap: .cgSessionEventTap)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            if let old = oldContents {
+                pasteboard.clearContents()
+                pasteboard.setString(old, forType: .string)
+            }
+        }
     }
 
     /// Type text directly via CGEvent Unicode (no clipboard, for streaming)
