@@ -8,12 +8,16 @@ class ASREngine {
 
     var isLoaded: Bool { model != nil }
 
-    func loadModel(completion: @escaping (Result<Int, Error>) -> Void) {
+    func loadModel(
+        progress: ((Double, String) -> Void)? = nil,
+        completion: @escaping (Result<Int, Error>) -> Void
+    ) {
         let start = CFAbsoluteTimeGetCurrent()
         Task {
             do {
                 let m = try await Qwen3ASRModel.fromPretrained(
-                    modelId: "mlx-community/Qwen3-ASR-0.6B-4bit"
+                    modelId: "mlx-community/Qwen3-ASR-0.6B-4bit",
+                    progressHandler: progress
                 )
                 self.model = m
                 let ms = Int((CFAbsoluteTimeGetCurrent() - start) * 1000)

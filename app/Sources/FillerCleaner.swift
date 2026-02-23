@@ -13,7 +13,7 @@ class FillerCleaner {
     private static let imEndId: Int32 = 151645
     private static let newlineId: Int32 = 198
 
-    func start() {
+    func start(progress: ((Double, String) -> Void)? = nil, completion: (() -> Void)? = nil) {
         Task {
             do {
                 let start = CFAbsoluteTimeGetCurrent()
@@ -22,9 +22,11 @@ class FillerCleaner {
                 try await HuggingFaceDownloader.downloadWeights(
                     modelId: Self.modelId,
                     to: cacheDir,
-                    additionalFiles: ["vocab.json", "merges.txt", "tokenizer_config.json"]
+                    additionalFiles: ["vocab.json", "merges.txt", "tokenizer_config.json"],
+                    progressHandler: { p in progress?(p * 0.8, "下载文本模型...") }
                 )
 
+                progress?(0.85, "加载文本模型...")
                 let tok = Qwen3Tokenizer()
                 try tok.load(from: cacheDir.appendingPathComponent("vocab.json"))
 
@@ -36,8 +38,11 @@ class FillerCleaner {
                 self.model = m
                 let ms = Int((CFAbsoluteTimeGetCurrent() - start) * 1000)
                 slog("FillerCleaner 模型加载完成 (\(ms)ms)")
+                progress?(1.0, "就绪")
+                completion?()
             } catch {
                 slog("FillerCleaner 模型加载失败: \(error)")
+                completion?()
             }
         }
     }

@@ -21,6 +21,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private let inserter = TextInserter()
     private let asr = ASREngine()
     private let cleaner = FillerCleaner()
+    private let loading = LoadingWindow()
     private var isRecording = false
     private var modelLoaded = false
 
@@ -28,8 +29,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         slog("应用启动")
         setupMenuBar()
         checkAccessibility()
+        loading.show()
         startASR()
-        cleaner.start()
+        cleaner.start(
+            progress: { [weak self] p, s in self?.loading.updateCleaner(p, s) },
+            completion: { [weak self] in self?.loading.markCleanerDone() }
+        )
 
         hotkey.onToggle = { [weak self] in self?.toggle() }
         hotkey.start()
@@ -56,12 +61,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func startASR() {
-        asr.loadModel { [weak self] result in
+        asr.loadModel(progress: { [weak self] p, s in
+            self?.loading.updateASR(p, s)
+        }) { [weak self] result in
             switch result {
             case .success(let ms):
                 self?.modelLoaded = true
+                self?.loading.markASRDone()
                 slog("模型加载完成 (\(ms)ms)")
             case .failure(let e):
+                self?.loading.markASRDone()
                 slog("模型加载失败: \(e)")
             }
         }
