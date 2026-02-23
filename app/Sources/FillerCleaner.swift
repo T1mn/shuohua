@@ -57,7 +57,7 @@ class FillerCleaner {
         guard let model, let tokenizer else { return nil }
         guard !text.isEmpty else { return nil }
 
-        let systemPrompt = "去除文本中的填充词（呃、嗯、啊、哦等犹豫词），保留语气助词，只输出清理后的文本。"
+        let systemPrompt = "去除文本中的填充词（呃、嗯、啊、哦等犹豫词），保留语气助词，只输出清理后的文本。/no_think"
         let systemTokens = tokenizer.encode(systemPrompt).map { Int32($0) }
         let userTokens = tokenizer.encode(text).map { Int32($0) }
 
@@ -108,10 +108,14 @@ class FillerCleaner {
         let result = tokenizer.decode(tokens: generated.map { Int($0) })
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // Skip <think>...</think> blocks if model produces them
-        if let range = result.range(of: "</think>") {
-            let afterThink = String(result[range.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
-            return afterThink.isEmpty ? nil : afterThink
+        // Strip <think>...</think> blocks if model produces them
+        if result.contains("<think>") {
+            if let range = result.range(of: "</think>") {
+                let afterThink = String(result[range.upperBound...]).trimmingCharacters(in: .whitespacesAndNewlines)
+                return afterThink.isEmpty ? nil : afterThink
+            }
+            // <think> without </think> — entire output is thinking, discard
+            return nil
         }
 
         return result.isEmpty ? nil : result

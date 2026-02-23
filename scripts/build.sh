@@ -6,13 +6,20 @@ APP_DIR="$ROOT/build/说话.app/Contents"
 
 # Build
 cd "$ROOT/app"
-xcodebuild -scheme Shuohua -destination 'platform=macOS' \
+xcodebuild -scheme Shuohua -configuration Release -destination 'platform=macOS' \
   -derivedDataPath DerivedData build -quiet
 
 # Create .app bundle
 rm -rf "$ROOT/build/说话.app"
 mkdir -p "$APP_DIR/MacOS" "$APP_DIR/Resources"
-cp DerivedData/Build/Products/Debug/Shuohua "$APP_DIR/MacOS/"
+cp DerivedData/Build/Products/Release/Shuohua "$APP_DIR/MacOS/"
 cp Resources/Info.plist "$APP_DIR/"
+cp -R DerivedData/Build/Products/Release/mlx-swift_Cmlx.bundle "$APP_DIR/Resources/"
 
-echo "✓ build/说话.app"
+# Ad-hoc sign with hardened runtime
+codesign --force --sign - \
+  --entitlements Resources/Shuohua.entitlements \
+  --options runtime \
+  "$ROOT/build/说话.app"
+
+echo "✓ build/说话.app (signed)"
