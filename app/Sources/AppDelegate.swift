@@ -23,21 +23,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private let cleaner = FillerCleaner()
     private let loading = LoadingWindow()
     private let hud = HUDWindow()
+    private let settings = SettingsWindow()
     private var isRecording = false
-    private var isTuning = false
     private var modelLoaded = false
-    private var memoryItem: NSMenuItem!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        UserDefaults.standard.register(defaults: [
+            "correction_enabled": true,
+            "provider": "deepseek",
+            "groq_model": "llama-3.3-70b-versatile",
+        ])
         slog("应用启动")
         setupMenuBar()
         checkAccessibility()
         loading.show()
         startASR()
-        cleaner.start(
-            progress: { [weak self] p, s in self?.loading.updateCleaner(p, s) },
-            completion: { [weak self] in self?.loading.markCleanerDone(); self?.updateMemory() }
-        )
 
         hotkey.onToggle = { [weak self] in self?.toggle() }
         hotkey.start()
@@ -49,22 +49,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: "双击 Ctrl 开始/停止录音", action: nil, keyEquivalent: ""))
-        memoryItem = NSMenuItem(title: "模型内存: 计算中...", action: nil, keyEquivalent: "")
-        memoryItem.isEnabled = false
-        menu.addItem(memoryItem)
-
-        let modelMenu = NSMenu()
-        for size in FillerCleaner.ModelSize.allCases {
-            let item = NSMenuItem(title: size.label, action: #selector(switchModel(_:)), keyEquivalent: "")
-            item.representedObject = size
-            if size == cleaner.currentModel { item.state = .on }
-            modelMenu.addItem(item)
-        }
-        let modelItem = NSMenuItem(title: "修正模型", action: nil, keyEquivalent: "")
-        modelItem.submenu = modelMenu
-        menu.addItem(modelItem)
-
         menu.addItem(NSMenuItem.separator())
+        menu.addItem(NSMenuItem(title: "设置...", action: #selector(showSettings), keyEquivalent: ","))
         menu.addItem(NSMenuItem(title: "查看运行日志", action: #selector(openLog), keyEquivalent: "l"))
         menu.addItem(NSMenuItem(title: "开启辅助功能权限...", action: #selector(openAccessibility), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
@@ -87,7 +73,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             case .success(let ms):
                 self?.modelLoaded = true
                 self?.loading.markASRDone()
-                self?.updateMemory()
                 slog("模型加载完成 (\(ms)ms)")
             case .failure(let e):
                 self?.loading.markASRDone()
@@ -132,60 +117,45 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         slog("开始转录...")
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
+            var streamed = ""
             let (text, ms) = self.asr.transcribe(samples: samples) { chunk in
+                streamed += chunk
                 DispatchQueue.main.async {
                     self.inserter.insertDelta(chunk)
                 }
             }
             slog("转录完成: \(text) (\(ms)ms)")
-
-            DispatchQueue.main.async { self.isTuning = true; self.updateIcon(); self.hud.show("修正中...", duration: 0) }
-            if let cleaned = self.cleaner.clean(text), cleaned != text, !cleaned.isEmpty {
-                slog("文本修正: \(cleaned)")
-                DispatchQueue.main.async {
-                    self.inserter.replace(deleteCount: text.count, with: cleaned)
-                }
+            slog("诊断: streamed=\(streamed.count) final=\(text.count) utf16=\(text.utf16.count) match=\(streamed == text)")
+            if streamed != text {
+                slog("诊断-streamed: \(streamed)")
+                slog("诊断-final:    \(text)")
             }
-            DispatchQueue.main.async { self.isTuning = false; self.updateIcon(); self.hud.hide() }
+
+            let deleteCount = streamed.count
+            if self.cleaner.isConfigured {
+                DispatchQueue.main.async { self.hud.show("修正中...", duration: 0) }
+                if let cleaned = self.cleaner.clean(text), cleaned != text, !cleaned.isEmpty {
+                    slog("文本修正: \(cleaned) (deleteCount=\(deleteCount))")
+                    DispatchQueue.main.async {
+                        self.inserter.replace(deleteCount: deleteCount, with: cleaned)
+                    }
+                }
+                DispatchQueue.main.async { self.hud.hide() }
+            } else {
+                slog("跳过文本修正: 未设置 API Key")
+            }
         }
     }
 
     private func updateIcon() {
         if let btn = statusItem.button {
-            let name = isRecording ? "mic.fill" : isTuning ? "sparkles" : "mic"
+            let name = isRecording ? "mic.fill" : "mic"
             btn.image = NSImage(systemSymbolName: name, accessibilityDescription: "Shuohua")
         }
     }
 
-    private func updateMemory() {
-        DispatchQueue.main.async {
-            var info = mach_task_basic_info()
-            var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
-            let kr = withUnsafeMutablePointer(to: &info) {
-                $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
-                    task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
-                }
-            }
-            if kr == KERN_SUCCESS {
-                let mb = info.resident_size / (1024 * 1024)
-                self.memoryItem.title = "模型内存: \(mb) MB"
-            }
-        }
-    }
-
-    @objc private func switchModel(_ sender: NSMenuItem) {
-        guard let size = sender.representedObject as? FillerCleaner.ModelSize,
-              size != cleaner.currentModel else { return }
-        // Update checkmarks
-        sender.menu?.items.forEach { $0.state = .off }
-        sender.state = .on
-        slog("切换修正模型: \(size.label)")
-        hud.show("切换模型中...", duration: 0)
-        cleaner.stop()
-        cleaner.start(size: size, completion: { [weak self] in
-            self?.updateMemory()
-            self?.hud.hide()
-        })
+    @objc private func showSettings() {
+        settings.show()
     }
 
     @objc private func openLog() {
@@ -198,7 +168,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func quit() {
         hotkey.stop()
-        cleaner.stop()
         NSApp.terminate(nil)
     }
 }

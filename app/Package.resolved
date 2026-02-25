@@ -12,10 +12,10 @@
     {
       "identity" : "qwen3-asr-swift",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/ivan-digital/qwen3-asr-swift",
+      "location" : "https://github.com/T1mn/qwen3-asr-swift",
       "state" : {
         "branch" : "main",
-        "revision" : "5fca6dda5d78d2681db1eda99181d5cea4200b46"
+        "revision" : "e42209aeffe9f414e16cdb45fa40226d6aaf59aa"
       }
     },
     {

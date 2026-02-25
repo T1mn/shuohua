@@ -4,15 +4,10 @@ class LoadingWindow {
     private var window: NSWindow?
     private var asrBar: NSProgressIndicator!
     private var asrLabel: NSTextField!
-    private var cleanerBar: NSProgressIndicator!
-    private var cleanerLabel: NSTextField!
-
-    private var asrDone = false
-    private var cleanerDone = false
 
     func show() {
         let w = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 340, height: 150),
+            contentRect: NSRect(x: 0, y: 0, width: 340, height: 90),
             styleMask: [.titled],
             backing: .buffered, defer: false
         )
@@ -28,13 +23,9 @@ class LoadingWindow {
 
         asrLabel = makeLabel("语音识别模型...")
         asrBar = makeBar()
-        cleanerLabel = makeLabel("文本清理模型...")
-        cleanerBar = makeBar()
 
         stack.addArrangedSubview(asrLabel)
         stack.addArrangedSubview(asrBar)
-        stack.addArrangedSubview(cleanerLabel)
-        stack.addArrangedSubview(cleanerBar)
 
         w.contentView?.addSubview(stack)
         NSLayoutConstraint.activate([
@@ -42,7 +33,6 @@ class LoadingWindow {
             stack.trailingAnchor.constraint(equalTo: w.contentView!.trailingAnchor, constant: -20),
             stack.centerYAnchor.constraint(equalTo: w.contentView!.centerYAnchor),
             asrBar.widthAnchor.constraint(equalTo: stack.widthAnchor),
-            cleanerBar.widthAnchor.constraint(equalTo: stack.widthAnchor),
         ])
 
         w.orderFrontRegardless()
@@ -56,27 +46,8 @@ class LoadingWindow {
         }
     }
 
-    func updateCleaner(_ progress: Double, _ status: String) {
-        DispatchQueue.main.async {
-            self.cleanerBar.doubleValue = progress * 100
-            self.cleanerLabel.stringValue = "文本清理: \(status)"
-        }
-    }
-
     func markASRDone() {
-        asrDone = true
-        checkClose()
-    }
-
-    func markCleanerDone() {
-        cleanerDone = true
-        checkClose()
-    }
-
-    private func checkClose() {
-        if asrDone && cleanerDone {
-            DispatchQueue.main.async { self.window?.close() }
-        }
+        DispatchQueue.main.async { self.window?.close() }
     }
 
     private func makeLabel(_ text: String) -> NSTextField {

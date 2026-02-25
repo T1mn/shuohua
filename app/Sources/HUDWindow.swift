@@ -43,7 +43,7 @@ class HUDWindow {
 
     private func createWindow(_ text: String) {
         let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 200, height: 50),
+            contentRect: NSRect(x: 0, y: 0, width: 120, height: 32),
             styleMask: [.nonactivatingPanel, .hudWindow],
             backing: .buffered, defer: false
         )
@@ -53,7 +53,7 @@ class HUDWindow {
         panel.hidesOnDeactivate = false
 
         let l = NSTextField(labelWithString: text)
-        l.font = .systemFont(ofSize: 16, weight: .medium)
+        l.font = .systemFont(ofSize: 12, weight: .medium)
         l.textColor = .white
         l.alignment = .center
         l.translatesAutoresizingMaskIntoConstraints = false
@@ -65,8 +65,8 @@ class HUDWindow {
         ])
 
         if let screen = NSScreen.main {
-            let x = (screen.frame.width - 200) / 2
-            let y = screen.frame.height * 0.75
+            let x = screen.frame.maxX - 120 - 8
+            let y = screen.frame.maxY - screen.visibleFrame.origin.y - 32 - 8
             panel.setFrameOrigin(NSPoint(x: x, y: y))
         }
 
