@@ -19,11 +19,28 @@ A macOS menu bar voice-to-text tool powered by on-device inference on Apple Sili
 ```bash
 git clone https://github.com/T1mn/shuohua.git
 cd shuohua
-bash scripts/build.sh
-open build/说话.app
+bash scripts/rebuild-open.sh
 ```
 
 Models (~1GB) download automatically on first launch. Grant microphone and accessibility permissions when prompted.
+
+## Rebuild / Install / Open
+
+```bash
+bash scripts/rebuild-open.sh
+```
+
+This script will:
+- quit the running app (if any)
+- rebuild and codesign `build/说话.app`
+- install to `/Applications/说话.app`
+- open the installed app
+
+If permissions look enabled in System Settings but still behave as disabled, run:
+
+```bash
+bash scripts/rebuild-open.sh --reset-tcc
+```
 
 ## Usage
 
