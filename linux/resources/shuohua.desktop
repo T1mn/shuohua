@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=说话 Shuohua
+Comment=Voice to text using Qwen3-ASR
+Exec=python3 -m shuohua
+Icon=audio-input-microphone
+Terminal=false
+Categories=Utility;Audio;
+StartupNotify=false
+X-GNOME-Autostart-enabled=true
