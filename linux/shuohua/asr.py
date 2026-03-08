@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import os
 import time
 from typing import Callable, Optional, Tuple
 
 import numpy as np
 
 from .logger import slog
+
+# Use cached model offline — skip HuggingFace connectivity checks
+os.environ.setdefault("HF_HUB_OFFLINE", "1")
+os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
 
 _MAX_CHUNK_SECONDS = 25
 _SAMPLE_RATE = 16000

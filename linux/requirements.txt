@@ -7,3 +7,4 @@ pystray>=0.19
 Pillow>=9.0
 httpx>=0.24
 PyYAML>=6.0
+python-dotenv>=1.0

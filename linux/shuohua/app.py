@@ -92,25 +92,25 @@ class App:
         # Reload config in case user edited it
         self.cfg = config.load()
 
-        streamed = ""
-
-        def on_chunk(chunk: str) -> None:
-            nonlocal streamed
-            streamed += chunk
-            text_inserter.insert_delta(chunk)
-
-        text, ms = self.asr.transcribe(samples, on_chunk=on_chunk)
+        # Transcribe without streaming insertion
+        text, ms = self.asr.transcribe(samples)
         slog(f"转录完成: {text} ({ms}ms)")
 
-        delete_count = len(streamed)
+        # Correct text if configured
+        final_text = text
         if filler_cleaner.is_configured(self.cfg):
-            notifier.notify("说话", "修正中...", timeout_ms=0)
+            notifier.notify("说话", "修正中...")
             cleaned = filler_cleaner.clean(self.cfg, text)
             if cleaned and cleaned != text:
-                slog(f"文本修正: {cleaned} (deleteCount={delete_count})")
-                text_inserter.replace(delete_count, cleaned)
+                slog(f"文本修正: {cleaned}")
+                final_text = cleaned
+            else:
+                slog("文本无需修正")
         else:
             slog("跳过文本修正: 未设置 API Key")
+
+        # Insert final text in one batch
+        text_inserter.insert_delta(final_text)
 
     def _shutdown(self) -> None:
         slog("应用关闭")

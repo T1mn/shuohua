@@ -24,7 +24,15 @@ def resolve(cfg: Config) -> Optional[LLMProvider]:
     """Resolve the configured LLM provider, or None if not configured."""
     provider = cfg.provider
 
-    if provider == "groq":
+    if provider == "dashscope":
+        if not cfg.dashscope_api_key:
+            return None
+        return LLMProvider(
+            endpoint="https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions",
+            model="qwen-turbo",
+            api_key=cfg.dashscope_api_key,
+        )
+    elif provider == "groq":
         if not cfg.groq_api_key:
             return None
         return LLMProvider(
@@ -51,7 +59,8 @@ def resolve(cfg: Config) -> Optional[LLMProvider]:
 
 
 def chat_completion(
-    provider: LLMProvider, system_prompt: str, user_message: str
+    provider: LLMProvider, system_prompt: str, user_message: str,
+    proxy: str = "",
 ) -> Optional[str]:
     """Send a chat completion request. Returns the response content or None."""
     body = {
@@ -72,6 +81,7 @@ def chat_completion(
                 "Authorization": f"Bearer {provider.api_key}",
             },
             timeout=_TIMEOUT,
+            proxy=proxy or None,
         )
         resp.raise_for_status()
         data = resp.json()
