@@ -11,6 +11,14 @@ class AudioRecorder: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
     private var actualSampleRate: Double = 48000.0
 
     func start() throws {
+        // 清空旧的 inputs/outputs，避免重复添加
+        for input in captureSession.inputs {
+            captureSession.removeInput(input)
+        }
+        for output in captureSession.outputs {
+            captureSession.removeOutput(output)
+        }
+
         guard let device = AVCaptureDevice.default(for: .audio) else {
             throw NSError(domain: "shuohua", code: 1, userInfo: [NSLocalizedDescriptionKey: "No audio device"])
         }
@@ -62,7 +70,6 @@ class AudioRecorder: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
 
         guard let data = dataPointer else { return }
 
-        // 音频是 Float32 格式
         let floatPointer = data.withMemoryRebound(to: Float.self, capacity: length / 4) { $0 }
         let sampleCount = length / 4
         let floatSamples = Array(UnsafeBufferPointer(start: floatPointer, count: sampleCount))
@@ -79,7 +86,6 @@ class AudioRecorder: NSObject, AVCaptureAudioDataOutputSampleBufferDelegate {
         buffer.removeAll()
         lock.unlock()
 
-        // 从 48kHz 重采样到 16kHz
         let resampled = resample(samples: result, fromRate: actualSampleRate, toRate: 16000.0)
         let duration = Double(resampled.count) / 16000.0
         slog("录音停止: 原始采样数=\(result.count), 重采样后=\(resampled.count), 时长=\(String(format: "%.1f", duration))s, 回调次数=\(callbackCount)")
