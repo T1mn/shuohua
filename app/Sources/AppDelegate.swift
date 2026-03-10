@@ -1,5 +1,6 @@
 import Cocoa
 import SwiftUI
+import AVFoundation
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
@@ -23,6 +24,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         slog("应用启动")
         setupMenuBar()
         checkAccessibility()
+        checkMicrophonePermission()
         loading.show()
         startASR()
 
@@ -50,6 +52,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             [kAXTrustedCheckOptionPrompt.takeUnretainedValue(): true] as CFDictionary
         )
         slog("辅助功能权限: \(trusted ? "已授权" : "未授权")")
+    }
+
+    private func checkMicrophonePermission() {
+        AVCaptureDevice.requestAccess(for: .audio) { granted in
+            slog("麦克风权限: \(granted ? "已授权" : "未授权")")
+        }
     }
 
     private func startASR() {
